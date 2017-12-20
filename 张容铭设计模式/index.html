@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <!-- 
+        函数也是变量，在团队开发中写代码需要考虑到别人，如果别人也定义了同样的方法就会覆盖
+        原有的功能，这种相互覆盖是不容易察觉的
+            function checkname（）{}
+            function checkemail（）{}
+    --------------------------------------------------------------------------------
+        如果放在一个对象里面保存，一旦被覆盖，所有的功能都会失效，这种问题明显易察觉
+            var obj={
+                checkname:function(){},
+                checkmail:function(){}
+            }
+    ---------------------------------------------------------------------------------
+        对像的另一种形式，缺点在于不可复制，实例化的对象不能继承方法
+            var obj = function(){};
+            obj.checkname = function(){}
+            obj.checkmail = function(){}
+    ---------------------------------------------------------------------------------
+        使用类的方式,缺点在于每new一次，都要把方法给到创建出来的对象，这样做浪费很大
+            var obj = funtion(){
+                this.checkname = function(){};
+                this.checkemail = function(){};
+            }
+    --------------------------------------------------------------------------------
+        使用原型方式,创建出来的对象用油同一个方法
+        var obj = funtion(){}
+        obj.prototype={
+            checkname:function(){},
+            checkemai:function(){}
+        }
+    --------------------------------------------------------------------------------
+        链式调用
+        var obj={
+                checkname:function(){
+                    return this;
+                },
+                checkmail:function(){
+                    return this;
+                }
+            }
+        obj.checkname().checkmail()  
+        **************************************************************************
+        var obj = funtion(){}
+        obj.prototype={
+            checkname:function(){
+                return this;
+            },
+            checkemai:function(){
+                return this;
+            }
+        }
+        
+        var a = new obj();
+        a.checkname().checkmail()
+
+    --------------------------------------------------------------------------------
+        如果想给每一个函数添加一个方法
+            Function.prototype.checkname = function(){};
+            但是这样做事不允许的，污染了原生对象Function，别人创建的函数也会被你创建的函数污染
+            可以抽象出一个统一添加方法的功能方法
+            Function.prototype.addmethod = function(name,fn){
+                this[name] = fn;
+            }
+            var a = function(){};
+            a.addmethod('checkname',function(){})
+            a.addmethod('checkname',function(){})
+    ----------------------------------------------------------------------------------
+        换一种方式使用方法
+            Function.prototype.addmethod = function(name,fn){
+                this.prototype[name] = fn;
+            } 
+            var a = function(){};
+            a.addmethod('checkname',function(){})
+            a.addmethod('checkname',function(){})
+            var m = new a();
+            m.checkmail();
+            m.checkname();
+    ----------------------------------------------------------------------------------
+        通过在类的原型上添加属性和方法，一种是一一为原型对象属性赋值
+        另一种是将一个对象赋值给类的原型对象
+
+    ----------------------------------------------------------------------------------
+
+        将类的静态变量通过闭包来实现：闭包是有权访问另外一个函数作用域中变量的函数,
+        即在函数内部创建另一个函数
+         
+        var book = (function(){
+            //静态私有变量
+            var booknum = 0;
+            //静态私有方法
+            function checkbook(name){}
+            //返回构造函数
+            return function(newid,newname,newprice){
+                //私有变量
+                var name,price;
+                //私有方法
+                function checkid(id){}
+
+                //特权方法：能访问到类的私有属性和方法
+
+                this.getname = function(){};
+                this.getprice = function(){};
+                this.setname = function(){};
+                this.setprice = function(){};
+
+                //公有属性
+                this.id = newid;
+                this.copy = function(){};
+                booknum++;
+                if(booknum>1000){
+                    throw new error('我们仅出版100本书')
+                }
+
+                //构造器
+                this.setname=(name);
+                this.setprice=(price);
+            }
+
+        })()
+
+        book.prototype={
+            //静态公有属性
+            isbook:false,
+            //静态公有方法
+            display : function(){}
+
+        } 
+
+        //利用闭包来实现
+        var book = (function(){
+            //静态私有变量
+            var booknum = 0;
+            //静态私有方法
+            function checkbook(name){}
+            //返回构造函数
+            function _Book(newid,newname,newprice){
+                //私有变量
+                var name,price;
+                //私有方法
+                function checkid(id){}
+
+                //特权方法：能访问到类的私有属性和方法
+
+                this.getname = function(){};
+                this.getprice = function(){};
+                this.setname = function(){};
+                this.setprice = function(){};
+
+                //公有属性
+                this.id = newid;
+                this.copy = function(){};
+                booknum++;
+                if(booknum>1000){
+                    throw new error('我们仅出版100本书')
+                }
+
+                //构造器
+                this.setname=(name);
+                this.setprice=(price);
+            }
+            _Book.prototype={
+                //静态公有属性
+                isbook:false,
+                //静态公有方法
+                display : function(){}
+
+             } 
+             
+             return _Book;
+
+        })()
+
+    ----------------------------------------------------------------------------------
+        创建对象的安全模式
+        function Book (title,id,type){
+            if(this instanceof Book){
+                this.title = title;
+                this.id = id;
+                this.type = type;
+            }else{
+               return new Book(title,id,type)
+            }
+        }
+    
+    ----------------------------------------------------------------------------------
+        继承之类式继承
+        function superClass(id){
+            this.id = id ;
+            this.arr=[1,2,3]
+        }
+        superClass.prototype.say = function (){
+            console.log('i can say')
+        }
+        function subClass(){}
+        subClass.prototype = new superClass();
+
+        这样subClass的实例在访问say方法时，就会去父类的原型上找
+        但是类式继承的缺点在于要是父类中的公有属性是引用类型，就会在子类中被
+        所有实例共用，如果某个子类的实例更改了父类的公有属性，会影响其他子类
+        使用的父类共有属性
+
+        组合继承
+        function superClass(id){
+            this.id = id ;
+            this.arr=[1,2,3]
+        }
+        superClass.prototype.say = function (){
+            console.log('i can say')
+        }
+        function subClass(id){
+            superClass.call(this,id)
+        }
+        subClass.prototype = new superClass();
+        缺点：子类继承父类原型上的方式时，又走了一遍父类构造函数
+
+
+        寄生式继承
+
+        
+
+
+
+
+
+     -->
+    
+</body>
+<script>
+
+    Function.prototype.addmethod = function(name,fn){
+        this[name] = fn;
+    }
+    var a = function(){};
+    a.addmethod('checkname',function(){
+        console.log(1);
+    });
+    a.checkname();
+
+    // console.log(obj.__proto__==a.prototype);//true
+    console.log(a.__proto__==Function.prototype);//true
+
+
+
+    var book = (function(){
+        //静态私有变量
+        var booknum = 0;
+        console.log(booknum);
+        //静态私有方法
+        function checkbook(name){}
+        //返回构造函数
+        return function(newid,newname,newprice){
+            //私有变量
+            var name,price;
+            //私有方法
+            function checkid(id){}
+
+            //特权方法：能访问到类的私有属性和方法
+
+            this.getname = function(){};
+            this.getprice = function(){};
+            this.setname = function(){};
+            this.setprice = function(){};
+
+            //公有属性
+            this.id = newid;
+            this.copy = function(){};
+            booknum++;
+            console.log(booknum)
+            if(booknum>1000){
+                throw new error('我们仅出版100本书')
+            }
+
+            //构造器
+            this.setname=(name);
+            this.setprice=(price);
+        }
+
+    })()
+
+    book.prototype={
+        //静态公有属性
+        isbook:false,
+        //静态公有方法
+        display : function(){}
+
+    }
+    // console.log(book());
+    // console.log(book());
+
+    // function superClass(id){
+    //     this.id = id;
+    //     this.arr=[1,2,3];
+    // }
+    // superClass.prototype.say = function(){
+    //     console.log('i can say');
+    // }
+    // function subClass(){}
+    // subClass.prototype = new superClass;
+    // var child = new subClass();
+    // child.say();
+    // console.log(child.arr.push(5555));
+    // var child2 = new subClass();
+    // console.log(child2.arr);
+
+        function inheritObject(o){
+            function F(){}
+            F.prototype = o;
+            return new F();
+        }
+        
+        var book = {
+            name :'js book',
+            alikeBook : ['css book','html book']
+        };
+        var newBook = inheritObject(book);
+        newBook.name = 'ajax book';
+        newBook.alikeBook.push('xml book');
+</script>
+</html>
